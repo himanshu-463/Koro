@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Love Letter for Kashish</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+      font-family: "Courier New", monospace;
+      overflow: hidden;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 500px;
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      text-align: left;
+      overflow-y: auto;
+      max-height: 70vh;
+      position: relative;
+    }
+
+    #screen {
+      min-height: 200px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 1.1em;
+      line-height: 1.6em;
+    }
+
+    .line {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: black;
+      vertical-align: bottom;
+      animation: blink 0.7s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      50.01%, 100% { opacity: 0; }
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      margin-top: 15px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 12px;
+      background: #ee9ca7;
+      color: white;
+      font-size: 1em;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      background: #ff7aa2;
+    }
+
+    .heart {
+      position: fixed;
+      font-size: 20px;
+      animation: floatUp 6s linear forwards;
+      pointer-events: none;
+    }
+
+    @keyframes floatUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-100vh); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="screen">
+      <span class="cursor"></span>
+    </div>
+    <div class="controls">
+      <button id="play">▶️ Play</button>
+      <button id="pause">⏸ Pause</button>
+      <button id="rewind">⏮ Rewind</button>
+      <button id="faster">⏩ Faster</button>
+      <button id="slower">⏪ Slower</button>
+    </div>
+  </div>
+
+  <script>
+    // The love letter (line by line ❤️)
+    const letter = [
+      "Hey Kashish,",
+      "I don't know the perfect words, so I'll give you honest ones.",
+      "In the 3rd day of clg, Meine tumhe pehli baar dekha tha,",
+      "aur tab se, i like you",
+      "Tumse roz baat karne ka try karta hoon, lekin jaise hi samne aati ho I get so nervous that words just disappear.",
+      "I know ki yakin nhi hoga lekin meri heartbeat badh jati hai kuch samajh hi nhi aata",
+      "but after all that I just want to say ki I really like you",
+      "With all my heart",
+      "And if you don't feel the same, it's totally okay",
+      "I just wanted to let you know how I feel",
+      "but i'll like you always"
+    ];
+
+    const screenEl = document.getElementById('screen');
+    const cursorEl = document.querySelector('.cursor');
+
+    let lineIndex = 0, charIndex = 0;
+    let playing = false;
+    let speed = 100; // ms per char
+    let rafId = null, lastTime = 0, accum = 0;
+    let currentLineEl = null;
+
+    function typeLoop(ts){
+      if(!playing){ return; }
+      if(!lastTime){ lastTime = ts; }
+      const delta = ts - lastTime; lastTime = ts; accum += delta;
+
+      while(accum >= speed){
+        accum -= speed;
+        const line = letter[lineIndex] || '';
+
+        if(charIndex === 0){
+          currentLineEl = document.createElement('span');
+          currentLineEl.className = 'line';
+
+          // ✅ Fix: safely insert before cursor or append
+          if (screenEl.contains(cursorEl)) {
+            screenEl.insertBefore(currentLineEl, cursorEl);
+          } else {
+            screenEl.appendChild(currentLineEl);
+          }
+        }
+
+        if(charIndex < line.length){
+          currentLineEl.textContent += line[charIndex++];
+          screenEl.scrollTop = screenEl.scrollHeight;
+          sprinkleHearts();
+        } else {
+          lineIndex++; charIndex = 0;
+          accum = Math.max(accum - 250, 0); // pause
+          if(lineIndex >= letter.length){ stop(); celebrate(); return; }
+        }
+      }
+      rafId = requestAnimationFrame(typeLoop);
+    }
+
+    function play(){ if(playing) return; playing = true; lastTime = 0; rafId = requestAnimationFrame(typeLoop); }
+    function stop(){ playing = false; if(rafId) cancelAnimationFrame(rafId); }
+    function pause(){ stop(); }
+    function rewind(){
+      stop(); lineIndex=0; charIndex=0;
+      screenEl.innerHTML = '<span class="cursor"></span>';
+      currentLineEl = null;
+      screenEl.scrollTop=0;
+    }
+
+    function sprinkleHearts(){
+      if(Math.random() < 0.06){
+        const h = document.createElement('div');
+        h.className = 'heart';
+        h.textContent = ['❤','💕','💗','💖','💞'][Math.floor(Math.random()*5)];
+        const x = Math.random()*100;
+        h.style.left = x+'vw';
+        h.style.animationDuration = (4 + Math.random()*4) + 's';
+        document.body.appendChild(h);
+        setTimeout(()=>h.remove(), 8000);
+      }
+    }
+
+    function celebrate(){
+      cursorEl.style.background = 'transparent';
+      for(let i=0;i<40;i++) setTimeout(sprinkleHearts, i*80);
+    }
+
+    document.getElementById('play').addEventListener('click', play);
+    document.getElementById('pause').addEventListener('click', pause);
+    document.getElementById('rewind').addEventListener('click', rewind);
+    document.getElementById('faster').addEventListener('click', ()=>{ speed = Math.max(10, speed-6); });
+    document.getElementById('slower').addEventListener('click', ()=>{ speed = Math.min(120, speed+6); });
+
+    document.addEventListener('click', ()=>{ if(!playing) play(); }, { once: true });
+  </script>
+</body>
+</html>
